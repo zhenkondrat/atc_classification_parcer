@@ -54,7 +54,7 @@ function from_preparaty_org(){
 //$tmp = from_preparaty_org();
 
 /*coompedium*/
-function data_from_compendium_page($url, &$arr, $parent_id){
+function data_from_compendium_page($url, &$arr, $parent_id, $is_first_request){
 	global $conn;
 
 	$host = "https://compendium.com.ua";
@@ -64,7 +64,9 @@ function data_from_compendium_page($url, &$arr, $parent_id){
 	$flag = false;
 	$tmp = array();
 
-	foreach($d->find('.list-unstyled:first li>a') as $link){ //'.list-unstyled:first li>a'
+	$selector = $is_first_request == true ? 'p>a' : '.list-unstyled:first li>a';
+
+	foreach($d->find($selector) as $link){ //'.list-unstyled:first li>a'
 		$flag = true;
 		$b = pq($link)->find("b:first");
 		$a = pq($link);
@@ -82,7 +84,7 @@ function data_from_compendium_page($url, &$arr, $parent_id){
 	foreach($tmp as $item){
 		array_push($arr, $item);
 	//	mysqli_query($conn, "INSERT INTO `atx`(`id`, `text`, `symb`, `parent_id`) VALUES (" . ($item['id']+8000) . ",'" . $item['text'] . "','" . $item['symb'] . "'," . ($item['parent'] + +8000) .")");
-		data_from_compendium_page($host. $item['url'], $arr, $item['id']);		
+		data_from_compendium_page($host. $item['url'], $arr, $item['id'], false);		
 	}
 	
 	phpQuery::unloadDocuments();
@@ -91,7 +93,11 @@ function data_from_compendium_page($url, &$arr, $parent_id){
 function from_compendium(){
 	$host = "https://compendium.com.ua";
 	$tmp = array();
-	data_from_compendium_page($host . "/uk/atc/A", $tmp, 0);
+
+	//change max_execution_time prolonging time to request
+    set_time_limit(5000);
+
+	data_from_compendium_page($host . "/uk/atc/", $tmp, 0, true);
 	return $tmp;
 }
 $tmp = from_compendium();
